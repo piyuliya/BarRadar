@@ -1,0 +1,6 @@
+env
+settings.py
+*.json
+*.html
+__pycache__
+*.DS_Store
