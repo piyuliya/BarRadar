@@ -44,8 +44,7 @@ sorted_bar = sorted(bar_distance, key=get_min_distance)
 
 m = folium.Map(
     location=user_coordinates,
-    zoom_start=15,
-    tiles='Stamen Terrain'
+    zoom_start=17,
 )
 folium.Marker(
     location=user_coordinates,
