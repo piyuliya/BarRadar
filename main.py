@@ -5,17 +5,19 @@ import folium
 from flask import Flask
 import settings
 
-with open("bars_data.json", "r", encoding="CP1251") as my_file:
-    bars_data = json.load(my_file)
+NEAREST_BARS_AMOUNT = 5
 
-bar_distance = []
+with open("bars.json", "r", encoding="CP1251") as my_file:
+    initial_list_of_bars = json.load(my_file)
+
+bars_distance = []
 
 user_place = input("Где вы находитесь? ")
 
 
-def fetch_coordinates(apikey, place):
+def fetch_coordinates(api_key, place):
     base_url = "https://geocode-maps.yandex.ru/1.x"
-    params = {"geocode": place, "apikey": apikey, "format": "json"}
+    params = {"geocode": place, "apikey": api_key, "format": "json"}
     response = requests.get(base_url, params=params)
     response.raise_for_status()
     places_found = response.json()['response']['GeoObjectCollection']['featureMember']
@@ -24,25 +26,26 @@ def fetch_coordinates(apikey, place):
     return lat, lon
 
 
-user_coordinates = fetch_coordinates(settings.APIKEY, user_place)
+user_coordinates = fetch_coordinates(settings.API_KEY, user_place)
 
-for point in bars_data:
-    bars = {}
-    bars['title'] = point['Name']
-    bars['latitude'] = point['Latitude_WGS84']
-    bars['longitude'] = point['Longitude_WGS84']
+for point in initial_list_of_bars:
+    bar = {
+        'title': point['Name'],
+        'latitude': point['Latitude_WGS84'],
+        'longitude': point['Longitude_WGS84'],
+    }
     bar_coordinates = point['Latitude_WGS84'], point['Longitude_WGS84']
-    bars['distance'] = distance.distance(user_coordinates, bar_coordinates).km
-    bar_distance.append(bars)
+    bar['distance'] = distance.distance(user_coordinates, bar_coordinates).km
+    bars_distance.append(bar)
 
 
-def get_min_distance(bar_distance):
-    return bar_distance['distance']
+def get_distance(bars_distance):
+    return bars_distance['distance']
 
 
-sorted_bar = sorted(bar_distance, key=get_min_distance)
+sorted_bars = sorted(bars_distance, key=get_distance)
 
-m = folium.Map(
+map_for_user = folium.Map(
     location=user_coordinates,
     zoom_start=17,
 )
@@ -50,17 +53,17 @@ folium.Marker(
     location=user_coordinates,
     popup='Вы здесь',
     icon=folium.Icon(color='red', icon='info-sign')
-).add_to(m)
+).add_to(map_for_user)
 
-for nearest_bars in sorted_bar[:5]:
+for nearest_bars in sorted_bars[:NEAREST_BARS_AMOUNT]:
     nearest_bars_coordinate = nearest_bars['latitude'], nearest_bars['longitude']
     folium.Marker(
         location=nearest_bars_coordinate,
         popup=nearest_bars['title'],
         icon=folium.Icon(color='green')
-    ).add_to(m)
+    ).add_to(map_for_user)
 
-m.save('index.html')
+map_for_user.save('index.html')
 
 
 def show_map():
