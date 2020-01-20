@@ -6,13 +6,11 @@ from flask import Flask
 import settings
 
 NEAREST_BARS_AMOUNT = 5
+bars_distance = []
+user_place = input("Где вы находитесь? ")
 
 with open("bars.json", "r", encoding="CP1251") as my_file:
     initial_list_of_bars = json.load(my_file)
-
-bars_distance = []
-
-user_place = input("Где вы находитесь? ")
 
 
 def fetch_coordinates(api_key, place):
@@ -26,6 +24,15 @@ def fetch_coordinates(api_key, place):
     return lat, lon
 
 
+def get_distance(bars_distance):
+    return bars_distance['distance']
+
+
+def show_map():
+    with open('index.html') as file:
+        return file.read()
+
+
 user_coordinates = fetch_coordinates(settings.API_KEY, user_place)
 
 for point in initial_list_of_bars:
@@ -37,11 +44,6 @@ for point in initial_list_of_bars:
     bar_coordinates = point['Latitude_WGS84'], point['Longitude_WGS84']
     bar['distance'] = distance.distance(user_coordinates, bar_coordinates).km
     bars_distance.append(bar)
-
-
-def get_distance(bars_distance):
-    return bars_distance['distance']
-
 
 sorted_bars = sorted(bars_distance, key=get_distance)
 
@@ -64,12 +66,6 @@ for nearest_bars in sorted_bars[:NEAREST_BARS_AMOUNT]:
     ).add_to(map_for_user)
 
 map_for_user.save('index.html')
-
-
-def show_map():
-    with open('index.html') as file:
-        return file.read()
-
 
 app = Flask(__name__)
 app.add_url_rule('/', 'bars map', show_map)
