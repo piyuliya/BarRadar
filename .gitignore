@@ -4,3 +4,4 @@ settings.py
 *.html
 __pycache__
 *.DS_Store
+*.png
