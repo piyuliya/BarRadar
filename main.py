@@ -6,11 +6,12 @@ from flask import Flask
 import settings
 
 NEAREST_BARS_AMOUNT = 5
-bars_distance = []
-user_place = input("Где вы находитесь? ")
 
-with open("bars.json", "r", encoding="CP1251") as my_file:
-    initial_list_of_bars = json.load(my_file)
+
+def get_bars_list():
+    with open("bars.json", "r", encoding="CP1251") as my_file:
+        initial_list_of_bars = json.load(my_file)
+        return initial_list_of_bars
 
 
 def fetch_coordinates(api_key, place):
@@ -24,49 +25,60 @@ def fetch_coordinates(api_key, place):
     return lat, lon
 
 
-def get_distance(bars_distance):
-    return bars_distance['distance']
-
-
 def show_map():
     with open('index.html') as file:
         return file.read()
 
 
-user_coordinates = fetch_coordinates(settings.API_KEY, user_place)
+def get_distance(user_place, initial_list_of_bars):
+    user_coordinates = fetch_coordinates(settings.API_KEY, user_place) 
+    bars_distance = []
+    bars_distance['distance']
+    for point in initial_list_of_bars:
+        bar = {
+            'title': point['Name'],
+            'latitude': point['Latitude_WGS84'],
+            'longitude': point['Longitude_WGS84'],
+        }
+        bar_coordinates = point['Latitude_WGS84'], point['Longitude_WGS84']
+        bar['distance'] = distance.distance(user_coordinates, bar_coordinates).km
+        bars_distance.append(bar)
+    return bars_distance
 
-for point in initial_list_of_bars:
-    bar = {
-        'title': point['Name'],
-        'latitude': point['Latitude_WGS84'],
-        'longitude': point['Longitude_WGS84'],
-    }
-    bar_coordinates = point['Latitude_WGS84'], point['Longitude_WGS84']
-    bar['distance'] = distance.distance(user_coordinates, bar_coordinates).km
-    bars_distance.append(bar)
 
-sorted_bars = sorted(bars_distance, key=get_distance)
+def get_sorted(bars_distance):
+    sorted_bars = sorted(bars_distance, key=get_distance)
+    return sorted_bars
 
-map_for_user = folium.Map(
-    location=user_coordinates,
-    zoom_start=17,
-)
-folium.Marker(
-    location=user_coordinates,
-    popup='Вы здесь',
-    icon=folium.Icon(color='red', icon='info-sign')
-).add_to(map_for_user)
 
-for nearest_bars in sorted_bars[:NEAREST_BARS_AMOUNT]:
-    nearest_bars_coordinate = nearest_bars['latitude'], nearest_bars['longitude']
+def create_map(user_coordinates):
+    map_for_user = folium.Map(
+        location=user_coordinates,
+        zoom_start=17,
+    )
+    return map_for_user
+
+
+def create_marker(map_for_user, user_coordinates, sorted_bars):
     folium.Marker(
-        location=nearest_bars_coordinate,
-        popup=nearest_bars['title'],
-        icon=folium.Icon(color='green')
+        location=user_coordinates,
+        popup='Вы здесь',
+        icon=folium.Icon(color='red', icon='info-sign')
     ).add_to(map_for_user)
 
-map_for_user.save('index.html')
+    for nearest_bars in sorted_bars[:NEAREST_BARS_AMOUNT]:
+        nearest_bars_coordinate = nearest_bars['latitude'], nearest_bars['longitude']
+        folium.Marker(
+            location=nearest_bars_coordinate,
+            popup=nearest_bars['title'],
+            icon=folium.Icon(color='green')
+        ).add_to(map_for_user)
+    return map_for_user.save('index.html')
 
-app = Flask(__name__)
-app.add_url_rule('/', 'bars map', show_map)
-app.run('0.0.0.0')
+
+if __name__ == '__main__':
+    user_place = input("Где вы находитесь? ")
+    app = Flask(__name__)
+    app.add_url_rule('/', 'bars map', show_map)
+    app.run('0.0.0.0')
+    show_map()
