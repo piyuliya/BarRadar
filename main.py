@@ -8,10 +8,10 @@ import settings
 NEAREST_BARS_AMOUNT = 5
 
 
-def get_bars_list():
+def get_bars():
     with open("bars.json", "r", encoding="CP1251") as my_file:
-        initial_list_of_bars = json.load(my_file)
-        return initial_list_of_bars
+        initial_bars = json.load(my_file)
+        return initial_bars
 
 
 def fetch_coordinates(api_key, place):
@@ -25,30 +25,24 @@ def fetch_coordinates(api_key, place):
     return lat, lon
 
 
-def show_map():
-    with open('index.html') as file:
-        return file.read()
-
-
-def get_distance(user_place, initial_list_of_bars):
+def get_distance(user_place, initial_bars):
     user_coordinates = fetch_coordinates(settings.API_KEY, user_place) 
-    bars_distance = []
-    bars_distance['distance']
-    for point in initial_list_of_bars:
+    bars_with_distances = []
+    for point in initial_bars:
         bar_coordinates = point['Latitude_WGS84'], point['Longitude_WGS84']
-        interval = distance.distance(user_coordinates, bar_coordinates).km
+        distance_to_bar = distance.distance(user_coordinates, bar_coordinates).km
         bar = {
             'title': point['Name'],
             'latitude': point['Latitude_WGS84'],
             'longitude': point['Longitude_WGS84'],
-            'distance': interval,
+            'distance': distance_to_bar,
         }
-        bars_distance.append(bar)
-    return bars_distance
+        bars_with_distances.append(bar)
+    return bars_with_distances
 
 
-def get_sorted(bars_distance):
-    sorted_bars = sorted(bars_distance, key=get_distance)
+def get_sorted(bars_with_distances):
+    sorted_bars = sorted(bars_with_distances, key=get_distance)
     return sorted_bars
 
 
@@ -58,6 +52,11 @@ def create_map(user_coordinates):
         zoom_start=17,
     )
     return map_for_user
+
+
+def show_map():
+    with open('index.html') as file:
+        return file.read()
 
 
 def create_marker(map_for_user, user_coordinates, sorted_bars):
