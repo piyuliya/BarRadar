@@ -26,7 +26,7 @@ def fetch_coordinates(api_key, place):
 
 
 def get_distance(user_place, initial_bars):
-    user_coordinates = fetch_coordinates(settings.API_KEY, user_place) 
+    user_coordinates = fetch_coordinates(settings.API_KEY, user_place)
     bars_with_distances = []
     for point in initial_bars:
         bar_coordinates = point['Latitude_WGS84'], point['Longitude_WGS84']
@@ -78,7 +78,16 @@ def create_marker(map_for_user, user_coordinates, sorted_bars):
 
 if __name__ == '__main__':
     user_place = input("Где вы находитесь? ")
+    bars = get_bars()
+    user_bars_with_distances = get_distance(user_place, bars)
+    user_sorted_bars = get_sorted(user_bars_with_distances)
+    user_coordinates = fetch_coordinates(settings.API_KEY, user_place)
+    map_for_user = create_map(user_coordinates)
+    user_markers = create_marker(
+        map_for_user,
+        user_coordinates,
+        user_sorted_bars
+    )
     app = Flask(__name__)
     app.add_url_rule('/', 'bars map', show_map)
     app.run('0.0.0.0')
-    show_map()
