@@ -41,8 +41,12 @@ def get_distance(user_place, initial_bars):
     return bars_with_distances
 
 
+def get_bar_distance(bar):
+    return bar['distance']
+
+
 def get_sorted(bars_with_distances):
-    sorted_bars = sorted(bars_with_distances, key=get_distance)
+    sorted_bars = sorted(bars_with_distances, key=get_bar_distance)
     return sorted_bars
 
 
